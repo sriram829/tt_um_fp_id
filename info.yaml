@@ -1,48 +1,37 @@
 # Tiny Tapeout project information
 project:
-  title:        ""      # Project title
-  author:       ""      # Your name
-  discord:      ""      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  ""      # One line description of what your project does
-  language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
-  clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
-
-  # How many tiles your design occupies? A single tile is about 167x108 uM.
-  tiles: "1x1"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
-
-  # Your top module name must start with "tt_um_". Make it unique by including your github username:
-  top_module:  "tt_um_example"
-
-  # List your project's source files here.
-  # Source files must be in ./src and you must list each source file separately, one per line.
-  # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
+  title:        "FinSec-1: AS-68M Fingerprint Verification ASIC"
+  author:       "A. Sriram, G. Lakshminarayanan, B. Lakshmi, T. N. Prabakar"
+  discord:      ""
+  description:  "Hardware-only AS-68M fingerprint verification ASIC. Implements complete UART command protocol (VfyPwd, SetSysPara, GetImg, Img2Tz, Search) as a 14-state deterministic FSM. No MCU or CPU. DRC=0, LVS=0, Antenna=0, zero timing violations across 9 PVT corners, 1.153 mW."
+  language:     "Verilog"
+  clock_hz:     50000000
+  tiles:        "2x2"
+  top_module:   "tt_um_fp_id"
+  how_it_works: "Sends VfyPwd to authenticate with AS-68M sensor, then SetSysPara sets security level 1. On finger detect via ST pin (ui_in[1]), autonomously sends GetImg, Img2Tz and Search commands over UART at 57600 baud 8-N-1. On 1:N match (conf=0x00), drives MATCH_OUT (uo_out[1]) HIGH for 3 seconds. On unknown finger drives no_match (uo_out[2]) HIGH 3s. Heartbeat on uo_out[7] toggles at ~1.5 Hz confirming ASIC is alive. No microcontroller, no RAM, no writable memory in the trusted path."
+  how_to_test:  "Connect AS-68M sensor TD (pin 4) to ui_in[0], sensor ST (pin 2) to ui_in[1], uo_out[0] to sensor RD (pin 5). Supply 3.3V. Pre-enroll a finger in sensor flash using a separate host tool. Assert rst_n LOW then HIGH. Wait ~800ms for uo_out[4] (sensor_rdy) to go HIGH. Place enrolled finger on sensor and check uo_out[1] goes HIGH within 5 seconds. Place unenrolled finger and check uo_out[2] goes HIGH. Heartbeat on uo_out[7] should toggle at ~1.5 Hz throughout."
   source_files:
-    - "project.v"
-
-# The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
-# This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
+    - "tt_um_fp_id.v"
+    - "verify_ctrl.v"
+    - "uart_tx.v"
+    - "uart_rx.v"
 pinout:
-  # Inputs
-  ui[0]: ""
-  ui[1]: ""
+  ui[0]: "uart_rx — UART data from AS-68M sensor TD pin 4, 57600 baud (double-flopped)"
+  ui[1]: "fp_touch — Finger-present from sensor ST pin 2 (double-flopped)"
   ui[2]: ""
   ui[3]: ""
   ui[4]: ""
   ui[5]: ""
   ui[6]: ""
   ui[7]: ""
-
-  # Outputs
-  uo[0]: ""
-  uo[1]: ""
-  uo[2]: ""
-  uo[3]: ""
-  uo[4]: ""
-  uo[5]: ""
-  uo[6]: ""
-  uo[7]: ""
-
-  # Bidirectional pins
+  uo[0]: "uart_tx — UART command output to sensor RD pin 5"
+  uo[1]: "match_out — HIGH 3s on verified fingerprint match"
+  uo[2]: "no_match_out — HIGH 3s when finger is not enrolled"
+  uo[3]: "error_out — HIGH on timeout or protocol error, cleared by rst_n"
+  uo[4]: "sensor_rdy — HIGH after VfyPwd ACK received from sensor"
+  uo[5]: "finger_det — Live synchronised mirror of fp_touch"
+  uo[6]: "uart_busy — HIGH during UART frame transmission"
+  uo[7]: "heartbeat — 1.5 Hz toggle from hb_cnt[25], ASIC alive indicator"
   uio[0]: ""
   uio[1]: ""
   uio[2]: ""
@@ -51,6 +40,5 @@ pinout:
   uio[5]: ""
   uio[6]: ""
   uio[7]: ""
-
 # Do not change!
 yaml_version: 6

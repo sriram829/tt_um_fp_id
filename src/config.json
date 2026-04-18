@@ -13,7 +13,6 @@
     "DIE_AREA"      : "0 0 334.88 225.76",
     "FP_CORE_UTIL"  : 40,
     "PL_TARGET_DENSITY": 0.50,
-    "MAGIC_WRITE_LEF_PINONLY": true,
     "QUIT_ON_TIMING_VIOLATIONS": 0,
     "QUIT_ON_MAGIC_DRC"        : 0,
     "QUIT_ON_LVS_ERROR"        : 0,
